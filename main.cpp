@@ -8,7 +8,7 @@
 #include "TCPClient.h"
 #include "Capturer.h"
 #include "XMLlist.h"
-
+#include "Button.h"
 
 int get_file_size(std::string fname);
 
@@ -23,6 +23,7 @@ int main()
     cap.set_path("data/tmp.jpg");
     cap.init();
 
+    Button button(1);
     /* static xml data */
     xml.account = "Katya";
     xml.id = "003";
@@ -39,6 +40,7 @@ int main()
     tcp.init(3425, "192.168.10.23");
     tcp.Send("Opi", 3);
     tcp.Send(xml.id.c_str(), 3);
+    tcp.Send(xml.account.c_str(), xml.account.length());
 
     last_time = std::time(NULL);
 
@@ -48,14 +50,11 @@ int main()
     std::string str;
     while(1)
     {
-        time = std::time(NULL);
-        if(time - last_time > 30)
+        if(button.isPressed())
         {
             strStream.str("");
             str = "";
-
-            last_time = time; 
-
+            /* get capture */
             do
             {
                 cap.get_capture();
