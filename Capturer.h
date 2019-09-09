@@ -6,6 +6,8 @@
 #include "opencv2/highgui.hpp"
 #include "opencv2/videoio.hpp"
 #include <string>
+#include <iostream>
+#include <fstream>
 
 class Capturer
 {
@@ -18,7 +20,6 @@ public:
 
 private:
     std::string path;
-    cv::Mat image;
     cv::VideoCapture capture;
 };
 

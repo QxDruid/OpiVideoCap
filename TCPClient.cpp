@@ -75,7 +75,7 @@ void TCPClient::Send(const char * data, int len)
 */
 
 
-void TCPClient::Send(const char * data, int len)
+int TCPClient::Send(const char * data, int len)
 {
     char buff[6];
 
@@ -87,13 +87,15 @@ void TCPClient::Send(const char * data, int len)
         if(send(this->sock, buff, 6, MSG_WAITALL) <= 0)
         {
             std::cout << "send len error" << std::endl;
-            return;
+            return 0;
         }
 
         if(send(this->sock, data, len, MSG_WAITALL) <= 0)
             {
                 std::cout << "send data error" << std::endl;
-                return;
+                return 0;
             }
             std::cout << len << " bytes sended successfully" << std::endl;
+            
+        return 1;
 }

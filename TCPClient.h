@@ -21,8 +21,9 @@ public:
 	TCPClient();
 	~TCPClient();
 
-	void Send(const char * data, int len);
+	int Send(const char * data, int len);
 	int init(int port, const char * ip);
+	//int connect();
 
 private:
 	int sock;

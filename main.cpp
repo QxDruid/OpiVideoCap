@@ -1,9 +1,9 @@
-
 #include <iostream>
 #include <fstream>
 #include <string>
 #include <ctime>
 #include <sstream>
+#include <cstdio>
 
 #include "TCPClient.h"
 #include "Capturer.h"
@@ -12,13 +12,20 @@
 
 int get_file_size(std::string fname);
 
-int main()
+int main(int argc,char ** argv)
 {
+    if(argc < 2)
+    {
+        std::cout << "example: sudo ./spam 192.168.10.21" << std::endl;
+        return 0;
+    }
+
+
+
     Capturer cap;
     XMLlist xml;   
     TCPClient tcp;
     int len = 0;
-
     /* Capturer image save path */
     cap.set_path("data/tmp.jpg");
     cap.init();
@@ -37,14 +44,14 @@ int main()
     char time_buff[50];
 
     /* TCPClient connection init */
-    tcp.init(3425, "192.168.10.23");
+    tcp.init(3425, argv[1]);
     tcp.Send("Opi", 3);
     tcp.Send(xml.id.c_str(), 3);
     tcp.Send(xml.account.c_str(), xml.account.length());
 
     last_time = std::time(NULL);
 
-	std::ofstream fout;
+    std::ofstream fout;
     std::ifstream fin;
     std::stringstream strStream;
     std::string str;
@@ -55,11 +62,12 @@ int main()
             strStream.str("");
             str = "";
             /* get capture */
+            remove("data/tmp.jpg");
             do
             {
                 cap.get_capture();
                 len = get_file_size("data/tmp.jpg");
-            } while (len < 200000); // val to EZCAP -> 100000;
+            } while (len < 150000); // val to EZCAP -> 100000;
 
             /*get current time*/
             time = std::time(NULL);
@@ -80,11 +88,11 @@ int main()
             tcp.Send(const_cast<char*>(xml.get().c_str()), xml.len());
             
 
-			fout.open("data/tmp2.jpg");
-			if(!fout.is_open())
-			{
-				std::cout << "TMP2 NOT OPEND" << std::endl;
-			}
+            fout.open("data/tmp2.jpg");
+            if(!fout.is_open())
+            {
+                std::cout << "TMP2 NOT OPEND" << std::endl;
+            }
             /*image send*/
             fin.open("data/tmp.jpg");
             strStream.str(""); // clear sstream
