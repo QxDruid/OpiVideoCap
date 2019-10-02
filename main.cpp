@@ -1,124 +1,106 @@
-#include <iostream>
-#include <fstream>
+/* Подключение библиотек для демонизации */
+#include <fcntl.h> 
+#include <errno.h> 
+#include <unistd.h> 
+#include <syslog.h> 
+#include <sys/types.h> 
+#include <sys/stat.h> 
+
+#include "AlarmClient.h"
 #include <string>
-#include <ctime>
 #include <sstream>
-#include <cstdio>
+#include <fstream>
 
-#include "TCPClient.h"
-#include "Capturer.h"
-#include "XMLlist.h"
-#include "Button.h"
+#define CONFIG "/etc/alarm-client/config"
+#define PIDFILE "/var/run/alarm-client.pid"
+#define LOGFILE "/etc/alarm-client/log"
 
-int get_file_size(std::string fname);
+void savepid()
+{
+	std::ofstream pidf;
+	pidf.open(PIDFILE,std::ios_base::out);
+	pidf << getpid();
+	pidf.close();
+}
+
+
+int log_it(std::string data)
+{
+	std::ofstream log;
+	log.open(LOGFILE,std::ios_base::out);
+	log << data << std::endl;
+	log.close();
+}
+
+int WorkProc(void)
+{
+	std::ifstream config;
+	
+	config.open(CONFIG);
+	if(!config.is_open())
+	{
+ 		log_it("... Config can not opened");
+ 		exit(EXIT_FAILURE);
+	}
+ 	std::string arg;
+ 	std::getline(config, arg);
+ 	config.close();
+
+ 	AlarmClient client;
+ 	client.start(arg);
+
+ 	log_it("... Some Error (Most real is: server offline). app Closed");
+ 	exit(EXIT_FAILURE);
+}
+
 
 int main(int argc,char ** argv)
 {
-    if(argc < 2)
-    {
-        std::cout << "example: sudo ./spam 192.168.10.21" << std::endl;
-        return 0;
-    }
+	log_it("... Start");
 
+	pid_t pid, sid;
 
-
-    Capturer cap;
-    XMLlist xml;   
-    TCPClient tcp;
-    int len = 0;
-    /* Capturer image save path */
-    cap.set_path("data/tmp.jpg");
-    cap.init();
-
-    Button button(1);
-    /* static xml data */
-    xml.account = "Katya";
-    xml.id = "003";
-    xml.result = "detected";
-
-    /* ctime settings */
-    std::time_t time;
-    std::time_t last_time;
-    std::tm* timeinfo;
-    char * format = "%Y-%b-%dT%H-%M-%S";
-    char time_buff[50];
-
-    /* TCPClient connection init */
-    tcp.init(3425, argv[1]);
-    tcp.Send("Opi", 3);
-    tcp.Send(xml.id.c_str(), 3);
-    tcp.Send(xml.account.c_str(), xml.account.length());
-
-    last_time = std::time(NULL);
-
-    std::ofstream fout;
-    std::ifstream fin;
-    std::stringstream strStream;
-    std::string str;
-    while(1)
-    {
-        if(button.isPressed())
-        {
-            strStream.str("");
-            str = "";
-            /* get capture */
-            remove("data/tmp.jpg");
-            do
-            {
-                cap.get_capture();
-                len = get_file_size("data/tmp.jpg");
-            } while (len < 150000); // val to EZCAP -> 100000;
-
-            /*get current time*/
-            time = std::time(NULL);
-            timeinfo = std::localtime(&time);
-            std::strftime(time_buff, 50, format, timeinfo);
-
-            /* send XMLpacket*/
-            xml.date_time = std::string(time_buff);
-            std::cout << "datetime =" << xml.date_time << std::endl;
-            xml.picture = std::string(time_buff)  + ".jpg";
-            xml.pack();
-
-
-            /* send header and file */
-            tcp.Send("xml", 3);
-            tcp.Send((xml.date_time + ".xml").c_str(), 24);
-            //tcp.Send(str.c_str(), str.size());
-            tcp.Send(const_cast<char*>(xml.get().c_str()), xml.len());
-            
-
-            fout.open("data/tmp2.jpg");
-            if(!fout.is_open())
-            {
-                std::cout << "TMP2 NOT OPEND" << std::endl;
-            }
-            /*image send*/
-            fin.open("data/tmp.jpg");
-            strStream.str(""); // clear sstream
-            strStream << fin.rdbuf();
-            str = strStream.str();
-            fin.close();
-            
-            fout << str;
-            fout.close();
-            
-            tcp.Send("image", 5);
-            tcp.Send(str.c_str(), str.size());
-        }
-    }
-
-    return 0;
-}
-
-int get_file_size(std::string fname)
+/* Ответвляемся от родительского процесса */
+pid = fork();
+if(pid < 0)
 {
-    std::fstream file(fname);
-    int size = 0;
-    file.seekg (0, std::ios_base::end);
-    size = file.tellg();
-    file.seekg(0,std::ios_base::beg);
-
-    file.close();
-    return size;
+	log_it("... fork failed");
+	exit(EXIT_FAILURE);
 }
+if (pid > 0)
+{
+	log_it("... fork success");
+	exit(EXIT_SUCCESS);
+}
+
+
+/* Изменяем файловую маску */
+umask(0);
+/* Создание нового SID для дочернего процесса */
+sid = setsid();
+if (sid < 0) {
+  log_it("... sid failure");
+  exit(EXIT_FAILURE);
+}
+
+// сохраняем pid нашего процесса чтоб потом управлять им
+savepid(); //  <<---------------------------------------------------------------
+
+/* Изменяем текущий рабочий каталог */
+if ((chdir("/")) < 0) {
+  log_it("... chdir failure");
+  exit(EXIT_FAILURE);
+}
+
+/* Закрываем стандартные файловые дескрипторы */
+close(STDIN_FILENO);
+close(STDOUT_FILENO);
+close(STDERR_FILENO);
+
+
+	/* запуск рабочепй программы */
+	WorkProc();
+
+    exit(EXIT_SUCCESS);
+}
+
