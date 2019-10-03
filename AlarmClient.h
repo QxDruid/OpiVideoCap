@@ -7,6 +7,7 @@
 #include <ctime>
 #include <sstream>
 #include <cstdio>
+#include <thread>
 
 #include "TCPClient.h"
 #include "Capturer.h"
@@ -21,6 +22,12 @@ public:
 	~AlarmClient();
 	int start(std::string arg);
 	int get_file_size(std::string fname);
+
+    int get_capt();
+    int pack_data();
+    int send_alarm();
+    int send_init_data(); 
+
 private:
 
     Capturer cap;
@@ -41,6 +48,11 @@ private:
     std::ifstream fin;
     std::stringstream strStream;
     std::string str;
+    
+    const char * data_path = "/data/tmp.jpg";
+
+/* FLAGS */
+
 };
 
 

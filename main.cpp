@@ -92,11 +92,11 @@ if ((chdir("/")) < 0) {
   exit(EXIT_FAILURE);
 }
 
-/* Закрываем стандартные файловые дескрипторы */
+/* Закрываем стандартные файловые дескрипторы 
 close(STDIN_FILENO);
 close(STDOUT_FILENO);
 close(STDERR_FILENO);
-
+*/
 
 	/* запуск рабочепй программы */
 	WorkProc();

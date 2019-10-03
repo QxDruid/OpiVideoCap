@@ -25,6 +25,7 @@ install: ;
 	cp $(TARGET) $(DIR)
 	cp initd_script /etc/init.d/$(TARGET)
 	chmod +x /etc/init.d/$(TARGET)
+	systemctl daemon-reload
 
 remove: ;
 	rm -rf $(DIR)$(TARGET)

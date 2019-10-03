@@ -22,8 +22,11 @@ public:
 	TCPClient();
 	~TCPClient();
 
-	int Send(const char * data, int len);
 	int init(int port, const char * ip);
+	int reconnect();
+
+	int Send(const char * data, int len);
+	std::string recv_data(int sock);
 	//int connect();
 
 private:
