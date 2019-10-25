@@ -22,6 +22,7 @@ install: ;
 	mkdir /data
 	mkdir /etc/$(TARGET)
 	cp config /etc/$(TARGET)/config
+	cp users /etc/$(TARGET)/users
 	cp $(TARGET) $(DIR)
 	cp initd_script /etc/init.d/$(TARGET)
 	chmod +x /etc/init.d/$(TARGET)

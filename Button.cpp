@@ -3,7 +3,6 @@
 
 Button::Button(int Pin_)
 {
-     wiringPiSetup ();
      this->Pin = Pin_;
      pinMode(this->Pin, INPUT);
 }

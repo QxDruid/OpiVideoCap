@@ -34,20 +34,9 @@ int log_it(std::string data)
 
 int WorkProc(void)
 {
-	std::ifstream config;
-	
-	config.open(CONFIG);
-	if(!config.is_open())
-	{
- 		log_it("... Config can not opened");
- 		exit(EXIT_FAILURE);
-	}
- 	std::string arg;
- 	std::getline(config, arg);
- 	config.close();
 
  	AlarmClient client;
- 	client.start(arg);
+ 	client.start();
 
  	log_it("... Some Error (Most real is: server offline). app Closed");
  	exit(EXIT_FAILURE);
