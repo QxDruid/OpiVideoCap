@@ -1,0 +1,117 @@
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
+
+void socket_send(int sock, const char * data, int len);
+int get_file_size(std::string fname);
+
+int main()
+{
+    int sock;
+    struct sockaddr_in addr;
+
+    sock = socket(AF_INET, SOCK_STREAM, 0);
+    if(sock < 0)
+    {
+         std::cout << "socket error" << std::endl;
+        return 0;
+    }
+
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(3425); 
+    addr.sin_addr.s_addr = inet_addr("192.168.10.23");
+    if(connect(sock, (struct sockaddr *)&addr, sizeof(addr)) < 0)
+    {
+        std::cout << "connect error" << std::endl;
+        return 0;
+    }
+
+    socket_send(sock, "005", 3);
+    socket_send(sock, "xml", 3);
+    socket_send(sock, "2019-08-19.xml", 14);
+    std::fstream fin("test.xml");
+
+    std::stringstream strStream;
+    std::string str;
+    strStream << fin.rdbuf();
+    fin.close();
+    str = strStream.str();
+    socket_send(sock, str.c_str(), str.size());
+
+    socket_send(sock, "image", 5);
+    fin.open("test.jpg");
+    std::ofstream fout("test2.jpg");
+
+    strStream.str("");
+    strStream << fin.rdbuf();
+    
+
+    fin.close();
+
+    str = strStream.str();
+    fout << str;
+        fout.close();
+
+    socket_send(sock, str.c_str(), str.size());
+
+
+
+    close(sock);
+
+    return 0;
+}
+
+int get_file_size(std::string fname)
+{
+    std::fstream file(fname);
+    int size = 0;
+    file.seekg (0, std::ios_base::end);
+    size = file.tellg();
+    file.seekg(0,std::ios_base::beg);
+
+    file.close();
+    return size;
+}
+
+
+void socket_send(int sock, const char * data, int len)
+{
+
+        int transfer_len = 0;
+        int sended = 0;
+        char buff[6];
+
+
+        sprintf(buff, "%06d", len);
+        if(send(sock, buff, 6, 0) <= 0)
+        {
+            std::cout << "send len error" << std::endl;
+            return;
+        }
+
+        while (sended < len)
+        {
+            if(len >= 1024)
+                transfer_len = len;
+
+            else
+                transfer_len = len - sended;
+
+            if(send(sock, data, transfer_len, 0) <= 0)
+            {
+                std::cout << "send data error" << std::endl;
+                return;
+            }
+            sended += transfer_len;
+            data += transfer_len;
+        }
+
+
+        std::cout << len << " bytes sended successfully" << std::endl;
+    }
